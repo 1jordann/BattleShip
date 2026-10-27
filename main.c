@@ -1,172 +1,133 @@
 #include <stdio.h>
-#include <unistd.h>
 #include <stdlib.h>
-void yourboard(int board[10][10], char carrier, char cruiser, char battleship, char sub, char destroyer,int place_X1,
-  int place_Y1,
-  int place_X2,
-  int place_Y2,
+#include <time.h>
+#include <ctype.h>
 
-  int startx,
-  int stopx,
-  int starty,
-  int stopy , int xcoordinate, char ycoordinate, int line, char column);
-//Print the enemy board
-void board1(int board[10][10], int line, char column, int xcoordinate, int ycoordinate, int win);
-//places enemy ships
-void shipss(int ships[2][2], int ship, int last);
+#define SIZE 10
+#define SHIP_COUNT 5
 
+/* Five standard Battleship ships: Carrier, Battleship, Cruiser, Submarine, Destroyer. */
+const int ship_lengths[SHIP_COUNT] = {5, 4, 3, 3, 2};
 
+void initialize_board(char board[SIZE][SIZE], char fill) {
+    for (int row = 0; row < SIZE; row++) {
+        for (int col = 0; col < SIZE; col++) {
+            board[row][col] = fill;
+        }
+    }
+}
+
+void print_board(char board[SIZE][SIZE]) {
+    printf("\n    A B C D E F G H I J\n");
+    for (int row = 0; row < SIZE; row++) {
+        printf("%2d  ", row + 1);
+        for (int col = 0; col < SIZE; col++) {
+            printf("%c ", board[row][col]);
+        }
+        printf("\n");
+    }
+    printf("\n");
+}
+
+/* Put ships on the hidden board, without overlaps or off-board positions. */
+void place_ships(char ships[SIZE][SIZE]) {
+    for (int ship = 0; ship < SHIP_COUNT; ship++) {
+        int length = ship_lengths[ship];
+        int placed = 0;
+        while (!placed) {
+            int vertical = rand() % 2;
+            int row = rand() % SIZE;
+            int col = rand() % SIZE;
+            int valid = 1;
+
+            for (int part = 0; part < length; part++) {
+                int r = row + (vertical ? part : 0);
+                int c = col + (vertical ? 0 : part);
+                if (r >= SIZE || c >= SIZE || ships[r][c] == 'S') {
+                    valid = 0;
+                    break;
+                }
+            }
+            if (valid) {
+                for (int part = 0; part < length; part++) {
+                    int r = row + (vertical ? part : 0);
+                    int c = col + (vertical ? 0 : part);
+                    ships[r][c] = 'S';
+                }
+                placed = 1;
+            }
+        }
+    }
+}
 
 int main(void) {
-  int board[10][10];
-  int line;
-  char column;
-  int ship;
-  int last;
-  int ships[2][2];
-  int xcoordinate;
-  char ycoordinate;
-  int attempt;
-  int attempts=0;
-  int hits=0;
-  int row;
-  char carrier = 67;
-  char cruiser = 82;
-  char battleship = 66;
-  char sub = 83;
-  char destroyer = 68;
-  char play;
-  char miss = 42;
-  int win=0;
-int place_X1;
-  int place_Y1;
-  int place_X2;
-  int place_Y2;
+    char ships[SIZE][SIZE];      /* Hidden enemy ship positions */
+    char guesses[SIZE][SIZE];    /* Only hits and misses shown to player */
+    char input[100];
+    int hits = 0;
+    int attempts = 0;
+    int total_ship_cells = 0;
 
-  int startx;
-  int stopx;
-  int starty;
-  int stopy;
-  board1(board,line,column,xcoordinate,ycoordinate,win);
-  shipss(ships,ship,last);
-  yourboard(board,carrier,cruiser, battleship,sub,destroyer,place_X1,place_Y1,
-  place_X2,
-  place_Y2,
-  startx,
-  stopx,
-  starty,
-  stopy ,xcoordinate,ycoordinate,line,column);
-    //Entering coordinates
-  printf("Enter coordinates (dont hit enter after x) starting with your x coordinate then your y coodinate.\n");
-  printf("EX: 1A\n");
-  scanf("%d%c", &xcoordinate, &ycoordinate);
+    srand((unsigned int)time(NULL));
+    initialize_board(ships, '.');
+    initialize_board(guesses, '.');
+    place_ships(ships);
 
+    for (int i = 0; i < SHIP_COUNT; i++) {
+        total_ship_cells += ship_lengths[i];
+    }
 
+    printf("Welcome to Battleship! Find all 5 hidden ships.\n");
+    printf("Enter coordinates like A1, J10, or 1A. Type Q to quit.\n");
 
-//HIT OR MISS (that joke died)
-       for(ship=0 ; ship < 5 ; ship++){
+    while (hits < total_ship_cells) {
+        print_board(guesses);
+        printf("Hits: %d/%d | Shots: %d\n", hits, total_ship_cells, attempts);
+        printf("Enter coordinate: ");
 
-
-           if(xcoordinate==ships[ship][0] && ycoordinate==ships[ship][1]){
-                printf("You hit a ship with the coordinate (%d,%c)\n",xcoordinate,ycoordinate);
-
-                return 1;
-            }
-          else if(xcoordinate!=ships[ship][0] && ycoordinate!=ships[ship][1]){
-
-
-            printf("You did not hit a ship with (%d,%c), better luck next time... ", xcoordinate,ycoordinate);
-            board[xcoordinate][ycoordinate]= miss;
-            break;
-          }
-
-  }
-
-
-
-
-  return 0;
-}
-//Doesnt even work :/
-void yourboard(int board[10][10], char carrier, char cruiser, char battleship, char sub, char destroyer,int place_X1,
-  int place_Y1,
-  int place_X2,
-  int place_Y2,
-  int startx,
-  int stopx,
-  int starty,
-  int stopy, int xcoordinate, char ycoordinate, int line, char column ){
-    printf("Your board\n");
-    for(line=0 ; line < 10 ; line++ )
-    for(column=0 ; column < 10 ; column++ )
-   board[line][column]=-1;
-
-    printf("\tA \tB \tC \tD \tE \tF \tG \tH \tI \tJ");
-
-  printf("\n");
-
-  for(line=0 ; line < 10 ; line++ ){
-  printf("%d",line+1);
-  for(column=0 ; column < 10 ; column++ ){
-if(board[line][column]==-1){
- printf("\t0");
- }
-
- }
-printf("\n");
-}
-    stopy = 0;
-            stopx = 0;
-            starty = 0;
-            startx = 0;
-            printf("\nPlease enter first coordinate to shoot  (capital letter followed by number, e.g. A8)  for the Carrier.");
-            scanf(" %c%d", &ycoordinate, &place_Y1);
-            place_X1 = ycoordinate - 65;
-            printf("\nPlease enter second coordinate for  the Carrier.");
-            scanf(" %c%d", &ycoordinate, &place_Y2);
-            place_X2 = ycoordinate - 65;
-
-  }
-
-  void board1(int board[10][10],int line, char column, int xcoordinate, int ycoordinate, int win){
-
-    printf("enemy board\n");
-    for(line=0 ; line < 10 ; line++ )
-    for(column=0 ; column < 10 ; column++ )
-   board[line][column]=-1;
-
-    printf("\tA \tB \tC \tD \tE \tF \tG \tH \tI \tJ");
-
-  printf("\n");
-
-  for(line=0 ; line < 10 ; line++ ){
-  printf("%d",line+1);
-  for(column=0 ; column < 10 ; column++ ){
-if(board[line][column]==-1){
- printf("\t0");
- }
-
- }
-printf("\n");
-}
-
-  }
-
-
-
-void shipss(int ships[2][2], int ship, int last){
-        for(ship=0 ; ship < 5 ; ship++){
-            ships[ship][0]= rand()%10;
-            ships[ship][1]= rand()%10;
-
-
-            for(last=0 ; last < ship ; last++){
-                if( (ships[ship][0] == ships[last][0])&&(ships[ship][1] == ships[last][1]) )
-                    do{
-                        ships[ship][0]= rand()%10;
-                        ships[ship][1]= rand()%10;
-                    }while( (ships[ship][0] == ships[last][0])&&(ships[ship][1] == ships[last][1]) );
-            }
-
+        if (fgets(input, sizeof(input), stdin) == NULL) {
+            printf("\nInput ended. Goodbye!\n");
+            return 0;
         }
+        if (toupper((unsigned char)input[0]) == 'Q' &&
+            (input[1] == '\n' || input[1] == '\0')) {
+            printf("Thanks for playing!\n");
+            return 0;
+        }
+
+        /* Allow both A1 and 1A; reject extra characters and invalid positions. */
+        char letter = 0;
+        int number = 0;
+        char extra = 0;
+        int parsed = sscanf(input, " %c%d %c", &letter, &number, &extra);
+        if (parsed != 2 || !isalpha((unsigned char)letter)) {
+            parsed = sscanf(input, " %d%c %c", &number, &letter, &extra);
+        }
+        letter = (char)toupper((unsigned char)letter);
+        if (parsed != 2 || letter < 'A' || letter > 'J' || number < 1 || number > 10) {
+            printf("Invalid coordinate. Use A1 through J10.\n");
+            continue;
+        }
+
+        int row = number - 1;
+        int col = letter - 'A';
+        if (guesses[row][col] != '.') {
+            printf("You already guessed that coordinate. Try another.\n");
+            continue;
+        }
+
+        attempts++;
+        if (ships[row][col] == 'S') {
+            guesses[row][col] = 'X';
+            hits++;
+            printf("Hit!\n");
+        } else {
+            guesses[row][col] = 'O';
+            printf("Miss!\n");
+        }
+    }
+
+    print_board(guesses);
+    printf("You won! All %d ship spaces found in %d shots!\n", hits, attempts);
+    return 0;
 }
